@@ -92,14 +92,43 @@ def nova_load_config_file():
         return None
     return p
 
+
+def nova_load_meta(cfg):
+    """
+    Load metadata from configuration file and regenerate the meta object.
+    """
+    meta = {}
+
+    try:
+        meta_string = cfg.get('openstack', 'filter_meta')
+    except:
+        meta_string = None
+
+    if meta_string:
+        for m in meta_string.split(';'):
+            # Separate to find key and value
+            key, value = m.split('|')
+
+            # Create group if not exist, do not enable override about meta config
+            if key not in meta:
+                meta[key] = value
+    return meta
+
+# Load configuration file
 config = nova_load_config_file()
 
+# Get metadata from file
+meta = nova_load_meta(config)
+
+# Get nova client
 client = nova_client.Client(
     version     = config.get('openstack', 'version'),
     username    = config.get('openstack', 'username'),
     api_key     = config.get('openstack', 'api_key'),
     auth_url    = config.get('openstack', 'auth_url'),
-    project_id  = config.get('openstack', 'project_id')
+    region_name = config.get('openstack', 'region_name'),
+    project_id  = config.get('openstack', 'project_id'),
+    auth_system = config.get('openstack', 'auth_system')
 )
 
 if len(sys.argv) == 2 and (sys.argv[1] == '--list'):
